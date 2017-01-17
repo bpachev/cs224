@@ -1,0 +1,36 @@
+#
+# Author: Rick Kimball
+# edited by Benjamin Pachev
+# email: rick@kimballsoftware.com
+# Version: 1.03 Initial version 10/21/2011
+
+APP= lab6
+OBJS= morse.o morse_codes.o
+MCU=msp430f2274
+
+CC=msp430-gcc
+AS=msp430-gcc
+CXX=msp430-g++
+COMMON=-Wall -Os -I. 
+CFLAGS   += -mmcu=$(MCU) $(COMMON)
+CXXFLAGS += -mmcu=$(MCU) $(COMMON)
+ASFLAGS  += -mmcu=$(MCU) $(COMMON)
+LDFLAGS   = -Wl,-Map,$(APP).map -nostdlib -nostartfiles -T $(APP).lds
+
+all: $(APP).elf
+
+$(APP).elf: $(OBJS) $(APP).lds
+	$(CC) $(LDFLAGS)  $(OBJS) -o $(APP).elf
+	msp430-objdump -z -EL -D -W $(APP).elf >$(APP).lss
+	msp430-size $(APP).elf
+	msp430-objcopy -O ihex $(APP).elf $(APP).hex
+
+run: all
+	sudo mspdebug --force-reset rf2500 "prog $(APP).elf"  "run"
+
+cycle_count: all
+	naken_util -disasm $(APP).hex > $(APP)_cc.txt
+
+
+clean:
+	rm -f *.o *.elf
